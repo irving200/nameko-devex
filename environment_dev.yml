@@ -20,3 +20,4 @@ dependencies:
     - coverage==4.5.3               #dev
     - flake8==3.7.7                 #dev
     - redis==3.2.1
+    - sqlalchemy-filters==0.12.0

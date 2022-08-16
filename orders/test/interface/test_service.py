@@ -34,6 +34,37 @@ def test_get_order(orders_rpc, order):
     assert response['id'] == order.id
 
 
+@pytest.fixture
+def order_list(db_session):
+    for i in range(5):
+        order = Order()
+        db_session.add(order)
+        db_session.add_all([
+            OrderDetail(
+                order=order, product_id="the_odyssey", price=99.51, quantity=1
+            ),
+            OrderDetail(
+                order=order, product_id="the_enigma", price=30.99, quantity=8
+            )
+        ])
+        db_session.commit()
+
+
+def test_get_orders_list(orders_rpc, order_list):
+    response = orders_rpc.get_orders(current_page=1, page_size=500)
+    assert len(response) == 5
+
+
+def test_get_orders_list_page_size(orders_rpc, order_list):
+    response = orders_rpc.get_orders(current_page=1, page_size=3)
+    assert len(response) == 3
+
+
+def teste_get_orders_list_empty_page(orders_rpc, order_list):
+    response = orders_rpc.get_orders(current_page=3, page_size=5)
+    assert len(response) == 0
+
+
 @pytest.mark.usefixtures('db_session')
 def test_will_raise_when_order_not_found(orders_rpc):
     with pytest.raises(RemoteError) as err:

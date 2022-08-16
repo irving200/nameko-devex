@@ -8,7 +8,12 @@ from werkzeug import Response
 
 from gateway.entrypoints import http
 from gateway.exceptions import OrderNotFound, ProductNotFound
-from gateway.schemas import CreateOrderSchema, GetOrderSchema, ProductSchema
+from gateway.schemas import (
+    CreateOrderSchema,
+    GetOrderSchema,
+    ProductSchema,
+    ListOrderSchema
+)
 
 
 class GatewayService(object):
@@ -72,6 +77,19 @@ class GatewayService(object):
         self.products_rpc.create(product_data)
         return Response(
             json.dumps({'id': product_data['id']}), mimetype='application/json'
+        )
+
+    @http("GET", "/orders")
+    def get_orders(self, request):
+        """Gets orders list.
+        """
+        orders = self.orders_rpc.get_orders(
+            current_page=int(request.args.get("current_page", 1)),
+            page_size=int(request.args.get("page_size", 5))
+        )
+        return Response(
+            ListOrderSchema(many=True).dumps(orders).data,
+            mimetype='application/json'
         )
 
     @http("GET", "/orders/<int:order_id>", expected_exceptions=OrderNotFound)

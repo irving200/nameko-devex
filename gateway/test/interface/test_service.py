@@ -176,6 +176,85 @@ class TestGetOrder(object):
         payload = response.json()
         assert payload['error'] == 'ORDER_NOT_FOUND'
         assert payload['message'] == 'missing'
+    
+    def test_can_list_orders(self, gateway_service, web_session):
+        # setup mock orders-service response:
+        gateway_service.orders_rpc.get_orders.return_value = [{
+            'id': 1,
+            'order_details': [
+                {
+                    'id': 1,
+                    'quantity': 2,
+                    'product_id': 'the_odyssey',
+                    'price': '200.00'
+                },
+                {
+                    'id': 2,
+                    'quantity': 1,
+                    'product_id': 'the_enigma',
+                    'price': '400.00'
+                }
+            ]
+        }, {
+            'id': 2,
+            'order_details': [
+                {
+                    'id': 1,
+                    'quantity': 4,
+                    'product_id': 'the_odyssey',
+                    'price': '400.00'
+                },
+                {
+                    'id': 2,
+                    'quantity': 2,
+                    'product_id': 'the_enigma',
+                    'price': '800.00'
+                }
+            ]
+        }]
+
+        # call the gateway service to get orders
+        response = web_session.get('/orders')
+        assert response.status_code == 200
+
+        expected_response = [{
+            'id': 1,
+            'order_details': [
+                {
+                    'id': 1,
+                    'quantity': 2,
+                    'product_id': 'the_odyssey',
+                    'price': '200.00'
+                },
+                {
+                    'id': 2,
+                    'quantity': 1,
+                    'product_id': 'the_enigma',
+                    'price': '400.00'
+                }
+            ]
+        }, {
+            'id': 2,
+            'order_details': [
+                {
+                    'id': 1,
+                    'quantity': 4,
+                    'product_id': 'the_odyssey',
+                    'price': '400.00'
+                },
+                {
+                    'id': 2,
+                    'quantity': 2,
+                    'product_id': 'the_enigma',
+                    'price': '800.00'
+                }
+            ]
+        }]
+        assert expected_response == response.json()
+
+        # check dependencies called as expected
+        assert [call(current_page=1, page_size=5)] == \
+            gateway_service.orders_rpc.get_orders.call_args_list
 
 
 class TestCreateOrder(object):
