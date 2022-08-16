@@ -33,3 +33,16 @@ class GetOrderSchema(Schema):
 
     id = fields.Int()
     order_details = fields.Nested(OrderDetail, many=True)
+
+
+class ListOrderSchema(Schema):
+
+    class OrderDetail(Schema):
+        id = fields.Int()
+        quantity = fields.Int()
+        product_id = fields.Str()
+        image = fields.Str()
+        price = fields.Decimal(as_string=True)
+
+    id = fields.Int()
+    order_details = fields.Nested(OrderDetail, many=True)

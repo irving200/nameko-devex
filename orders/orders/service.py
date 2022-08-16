@@ -2,6 +2,8 @@ from nameko.events import EventDispatcher
 from nameko.rpc import rpc
 from nameko_sqlalchemy import DatabaseSession
 
+from sqlalchemy_filters import apply_pagination
+
 from orders.exceptions import NotFound
 from orders.models import DeclarativeBase, Order, OrderDetail
 from orders.schemas import OrderSchema
@@ -12,6 +14,15 @@ class OrdersService:
 
     db = DatabaseSession(DeclarativeBase)
     event_dispatcher = EventDispatcher()
+
+    @rpc
+    def get_orders(self, current_page, page_size):
+        orders, pagination = apply_pagination(
+            self.db.query(Order),
+            page_number=current_page,
+            page_size=page_size
+        )
+        return OrderSchema(many=True).dump(orders).data
 
     @rpc
     def get_order(self, order_id):
