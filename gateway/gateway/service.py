@@ -1,8 +1,7 @@
 import json
-
 from marshmallow import ValidationError
 from nameko import config
-from nameko.exceptions import BadRequest
+from nameko.exceptions import BadRequest, RemoteError
 from nameko.rpc import RpcProxy
 from werkzeug import Response
 
@@ -111,19 +110,13 @@ class GatewayService(object):
         # raise``OrderNotFound``
         order = self.orders_rpc.get_order(order_id)
 
-        # Retrieve all products from the products service
-        product_map = {prod['id']: prod for prod in self.products_rpc.list()}
-
         # get the configured image root
         image_root = config['PRODUCT_IMAGE_ROOT']
 
         # Enhance order details with product and image details.
         for item in order['order_details']:
-            product_id = item['product_id']
-
-            item['product'] = product_map[product_id]
             # Construct an image url.
-            item['image'] = '{}/{}.jpg'.format(image_root, product_id)
+            item['image'] = '{}/{}.jpg'.format(image_root, item['product_id'])
 
         return order
 
@@ -169,24 +162,16 @@ class GatewayService(object):
             raise BadRequest("Invalid json: {}".format(exc))
 
         # Create the order
-        # Note - this may raise `ProductNotFound`
-        id_ = self._create_order(order_data)
-        return Response(json.dumps({'id': id_}), mimetype='application/json')
-
-    def _create_order(self, order_data):
-        # check order product ids are valid
-        valid_product_ids = {prod['id'] for prod in self.products_rpc.list()}
-        for item in order_data['order_details']:
-            if item['product_id'] not in valid_product_ids:
-                raise ProductNotFound(
-                    "Product Id {}".format(item['product_id'])
-                )
-
-        # Call orders-service to create the order.
-        # Dump the data through the schema to ensure the values are serialized
-        # correctly.
+        # Note - this may raise `NotFound`
         serialized_data = CreateOrderSchema().dump(order_data).data
-        result = self.orders_rpc.create_order(
-            serialized_data['order_details']
+        try:
+            result = self.orders_rpc.create_order(
+                serialized_data['order_details']
+            )
+        except RemoteError as exc:
+            if exc.exc_type == 'ProductNotFound':
+                raise ProductNotFound(exc.value)
+        return Response(
+            json.dumps({'id': result['id']}),
+            mimetype='application/json'
         )
-        return result['id']

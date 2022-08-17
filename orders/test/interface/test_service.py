@@ -3,7 +3,7 @@ import pytest
 from mock import call
 from nameko.exceptions import RemoteError
 
-from orders.models import Order, OrderDetail
+from orders.models import Order, OrderDetail, Product
 from orders.schemas import OrderSchema, OrderDetailSchema
 
 
@@ -72,8 +72,30 @@ def test_will_raise_when_order_not_found(orders_rpc):
     assert err.value.value == 'Order with id 1 not found'
 
 
+@pytest.fixture
+def products(db_session):
+    the_odyssey = Product(
+        redis_id="the_odyssey",
+        title="odyssey_test",
+        passenger_capacity=10,
+        maximum_speed=1,
+        in_stock=1
+    )
+    db_session.add(the_odyssey)
+    the_enigma = Product(
+        redis_id="the_enigma",
+        title="enigma_test",
+        passenger_capacity=10,
+        maximum_speed=1,
+        in_stock=1
+    )
+    db_session.add(the_enigma)
+    db_session.commit()
+    return [the_odyssey, the_enigma]
+
+
 @pytest.mark.usefixtures('db_session')
-def test_can_create_order(orders_service, orders_rpc):
+def test_can_create_order(orders_service, orders_rpc, products):
     order_details = [
         {
             'product_id': "the_odyssey",

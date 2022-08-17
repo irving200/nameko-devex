@@ -1,6 +1,6 @@
 import logging
 
-from nameko.events import event_handler
+from nameko.events import event_handler, EventDispatcher
 from nameko.rpc import rpc
 
 from products import dependencies, schemas
@@ -14,6 +14,7 @@ class ProductsService:
     name = 'products'
 
     storage = dependencies.Storage()
+    event_dispatcher = EventDispatcher()
 
     @rpc
     def get(self, product_id):
@@ -29,6 +30,9 @@ class ProductsService:
     def create(self, product):
         product = schemas.Product(strict=True).load(product).data
         self.storage.create(product)
+        self.event_dispatcher('product_created', {
+            'product': product,
+        })
 
     @event_handler('orders', 'order_created')
     def handle_order_created(self, payload):

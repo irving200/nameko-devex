@@ -10,4 +10,4 @@ htmlcov
 **/*.log
 stats.xml
 
-*/alembic/versions/*
+*/alembic/versions/*_init.py
