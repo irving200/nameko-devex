@@ -116,3 +116,12 @@ Ensure RabbitMQ, PostgreSQL and Redis are running and `config.yaml` files for ea
 ## Debug / Project setup for repo
 
 Please refer to [README-DevEnv.md](README-DevEnv.md)
+
+
+## Question 1: Why is performance degrading as the test run longer ?
+
+The performance is degrading due to the increasing number of products beeing added to redis when listed by the create_order and get_order calls.
+
+## Question 2: How do you fix it ?
+
+One solution would be to replicate products into the order database to avoid those external calls, making the order service self sufficient.
