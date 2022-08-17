@@ -125,3 +125,5 @@ The performance is degrading due to the increasing number of products beeing add
 ## Question 2: How do you fix it ?
 
 One solution would be to replicate products into the order database to avoid those external calls, making the order service self sufficient.
+Another simpler solution would be to change the list call from regis storagewhraper to a more contained call with only the wanted key as arguments.
+I prefer the former as it makes the order service able to work alone making it truly independent.
