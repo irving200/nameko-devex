@@ -21,7 +21,6 @@ class HttpEntrypoint(HttpRequestHandler):
 
     def response_from_exception(self, exc):
         status_code, error_code = 500, 'UNEXPECTED_ERROR'
-
         if isinstance(exc, self.expected_exceptions):
             if type(exc) in self.mapped_errors:
                 status_code, error_code = self.mapped_errors[type(exc)]
